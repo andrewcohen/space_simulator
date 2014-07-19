@@ -1,0 +1,43 @@
+package main
+
+import "math"
+
+type Vector struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+func (v Vector) Add(v2 Vector) Vector {
+	x := v.X + v2.X
+	y := v.Y + v2.Y
+	return Vector{x, y}
+}
+
+func (v Vector) addMany(vecs []Vector) Vector {
+	for _, vec := range vecs {
+		v = v.Add(vec)
+	}
+	return v
+}
+
+func (v Vector) Sub(v2 Vector) Vector {
+	x := v.X - v2.X
+	y := v.Y - v2.Y
+	return Vector{x, y}
+}
+
+func (v Vector) multiplyByNum(n float64) Vector {
+	x := v.X * n
+	y := v.Y * n
+	return Vector{x, y}
+}
+
+func (v Vector) divideByNum(n float64) Vector {
+	x := v.X / n
+	y := v.Y / n
+	return Vector{x, y}
+}
+
+func (v Vector) Mag() float64 {
+	return math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
+}
