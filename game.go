@@ -11,16 +11,9 @@ type Game struct {
 
 var game = Game{}
 
-type World struct {
-	Uptime   int       `json:"uptime"`
-	Width    float64   `json:"width"`
-	Height   float64   `json:"height"`
-	Entities []*Entity `json:"entities"`
-}
-
 var (
-	world            = World{0, 500.0, 500.0, nil}
-	numberOfEntities = 20
+	events           = []Event{}
+	numberOfEntities = 10
 	numTeams         = 7
 )
 
@@ -37,24 +30,49 @@ func updateGame(now time.Time, w World) World {
 		entity.Position = entity.Position.Add(entity.Velocity)
 	}
 
-	out, _ := json.Marshal(w)
-	hub.broadcast <- []byte(out)
-
 	return w
 }
 
-func (game *Game) run() {
-	for i := 0; i < numberOfEntities; i++ {
-		id := rand.Intn(numTeams)
-		x := world.Width/2 + ((rand.Float64() - 0.5) * 8)
-		y := world.Height/2 + ((rand.Float64() - 0.5) * 8)
-		ent := Entity{id, Vector{x, y}, Vector{0, 0}}
-		world.Entities = append(world.Entities, &ent)
-	}
+func update() {
 	start := time.Now().Second()
 	timer := time.Tick(15 * time.Millisecond)
 	for now := range timer {
 		world = updateGame(now, world)
+		processEvents()
 		world.Uptime = time.Now().Second() - start
+
+		out, _ := json.Marshal(world)
+		hub.broadcast <- []byte(out)
 	}
+}
+
+func updateTarget(t Vector) {
+	for _, entity := range world.Entities {
+		entity.Target = t
+	}
+}
+
+func processEvents() {
+	for _, event := range events {
+		switch event.Kind {
+		case "click":
+			updateTarget(Vector{event.X, event.Y})
+			break
+		}
+	}
+
+	events = nil
+}
+
+func (game *Game) run() {
+	println("run")
+	for i := 0; i < numberOfEntities; i++ {
+		id := rand.Intn(numTeams)
+		x := world.Width/2 + ((rand.Float64() - 0.5) * 8)
+		y := world.Height/2 + ((rand.Float64() - 0.5) * 8)
+		ent := Entity{id, Vector{x, y}, Vector{0, 0}, Vector{100.0, 100.0}}
+		world.Entities = append(world.Entities, &ent)
+	}
+	go getInput()
+	go update()
 }

@@ -8,9 +8,7 @@ type Vector struct {
 }
 
 func (v Vector) Add(v2 Vector) Vector {
-	x := v.X + v2.X
-	y := v.Y + v2.Y
-	return Vector{x, y}
+	return Vector{v.X + v2.X, v.Y + v2.Y}
 }
 
 func (v Vector) addMany(vecs []Vector) Vector {
@@ -21,9 +19,7 @@ func (v Vector) addMany(vecs []Vector) Vector {
 }
 
 func (v Vector) Sub(v2 Vector) Vector {
-	x := v.X - v2.X
-	y := v.Y - v2.Y
-	return Vector{x, y}
+	return Vector{v.X - v2.X, v.Y - v2.Y}
 }
 
 func (v Vector) multiplyByNum(n float64) Vector {
@@ -33,9 +29,7 @@ func (v Vector) multiplyByNum(n float64) Vector {
 }
 
 func (v Vector) divideByNum(n float64) Vector {
-	x := v.X / n
-	y := v.Y / n
-	return Vector{x, y}
+	return Vector{v.X / n, v.Y / n}
 }
 
 func (v Vector) Mag() float64 {

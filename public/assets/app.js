@@ -17,17 +17,15 @@ function connect() {
 
   conn.onmessage = function(e) {
     var parsed = JSON.parse(e.data);
+    lastMsg = parsed;
     msgEl.innerText = "uptime: " + parsed.uptime + "s";
-    if (parsed.uptime % 20 == 0) {
-      console.log(parsed);
-    }
     entities = parsed.entities;
   }
 }
 
 var canvas = document.getElementById("canvas");
 var ctx = canvas.getContext('2d');
-var WIDTH = canvas.width, HEIGHT = canvas.height;
+var WIDTH = canvas.width = document.body.clientWidth, HEIGHT = canvas.height = document.body.clientHeight;
 var entities = [];
 render();
 
@@ -47,4 +45,15 @@ function render(timestamp) {
     }
   }
   requestAnimationFrame(render);
+}
+
+canvas.onmouseup = function(e) {
+  var data = {kind: "click", x: e.offsetX, y: e.offsetY};
+  sendMessage([data]);
+};
+
+var sendMessage = function(msg) {
+  var json = JSON.stringify(msg);
+  console.log(json);
+  conn.send(json);
 }

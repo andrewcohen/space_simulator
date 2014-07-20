@@ -16,7 +16,7 @@ func (c *Connection) reader() {
 		if err != nil {
 			break
 		}
-		hub.broadcast <- message
+		hub.receive <- message
 	}
 	c.ws.Close()
 }

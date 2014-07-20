@@ -2,8 +2,9 @@ package main
 
 type Hub struct {
 	connections map[*Connection]bool
-	// inbound messages
+	// messages to client
 	broadcast chan []byte
+	receive   chan []byte
 
 	register   chan *Connection
 	unregister chan *Connection
@@ -11,6 +12,7 @@ type Hub struct {
 
 var hub = Hub{
 	broadcast:   make(chan []byte),
+	receive:     make(chan []byte),
 	register:    make(chan *Connection),
 	unregister:  make(chan *Connection),
 	connections: make(map[*Connection]bool),

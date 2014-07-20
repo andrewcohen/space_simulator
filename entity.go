@@ -6,11 +6,12 @@ type Entity struct {
 	TeamId   int    `json:"team_id"`
 	Position Vector `json:"position"`
 	Velocity Vector `json:"velocity"`
+	Target   Vector `json:"target"`
 }
 
 var (
-	separationDistance = 20.0
-	velocityLimit      = 4.0
+	separationDistance = 30.0
+	velocityLimit      = 3.0
 )
 
 func centerOfMass(e *Entity) Vector {
@@ -66,6 +67,6 @@ func maxVelocity(e *Entity) Vector {
 }
 
 func tendToPlace(e *Entity) Vector {
-	place := Vector{250, 250}
+	place := e.Target
 	return place.Sub(e.Position).divideByNum(100)
 }
