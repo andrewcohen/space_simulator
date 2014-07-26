@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"runtime"
 	"text/template"
 )
 
@@ -32,6 +33,14 @@ func assetHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+	//cfg := profile.Config{
+	//CPUProfile:     true,
+	//MemProfile:     true,
+	//ProfilePath:    "profiles", // store profiles in current directory
+	//NoShutdownHook: false,      // do not hook SIGINT
+	//}
+	//defer profile.Start(&cfg).Stop()
+	runtime.GOMAXPROCS(4)
 	flag.Parse()
 	homeTemplate = template.Must(template.ParseFiles(filepath.Join(*assets, "index.html")))
 	go hub.run()

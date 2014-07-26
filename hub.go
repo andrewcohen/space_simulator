@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Hub struct {
 	connections map[*Connection]bool
 	// messages to client
@@ -23,6 +25,7 @@ func (hub *Hub) run() {
 		select {
 		case c := <-hub.register:
 			hub.connections[c] = true
+			fmt.Println(hub.connections)
 		case c := <-hub.unregister:
 			if _, ok := hub.connections[c]; ok {
 				delete(hub.connections, c)

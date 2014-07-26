@@ -33,5 +33,5 @@ func (v Vector) divideByNum(n float64) Vector {
 }
 
 func (v Vector) Mag() float64 {
-	return math.Sqrt(math.Pow(v.X, 2) + math.Pow(v.Y, 2))
+	return math.Sqrt((v.X * v.X) + (v.Y * v.Y))
 }

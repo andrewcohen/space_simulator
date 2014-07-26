@@ -3,12 +3,12 @@ package main
 import "encoding/json"
 
 type Event struct {
-	Kind string
-	X    float64
-	Y    float64
+	Kind        string
+	CommandType string
+	Direction   float64
 }
 
-func getInput() {
+func GetInput() {
 	for {
 		select {
 		case m := <-hub.receive:

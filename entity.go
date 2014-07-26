@@ -1,18 +1,73 @@
 package main
 
-import "math"
+const (
+	StaticEntity = iota
+	DynamicEntity
+)
 
+// Entity ...
 type Entity struct {
 	TeamId   int    `json:"team_id"`
 	Position Vector `json:"position"`
+	Size     Vector `json:"size"`
 	Velocity Vector `json:"velocity"`
 	Target   Vector `json:"target"`
+	Kind     int    `json:"kind"`
 }
 
 var (
 	separationDistance = 30.0
-	velocityLimit      = 3.0
+	jumpSpeed          = 15.0
+	velocityLimit      = 5.0
+	runSpeed           = 5.0
 )
+
+func (e *Entity) Update() {
+	if e.Kind == DynamicEntity {
+		e.Velocity = e.Velocity.Add(world.Gravity)
+		if e.Velocity.X > 0 {
+			e.Velocity = e.Velocity.Add(world.Friction)
+		} else {
+			e.Velocity = e.Velocity.Sub(world.Friction)
+		}
+		e.ClampMaxVelocity()
+		e.Position = e.Position.Sub(e.Velocity)
+
+		// check collisions
+		for _, entity := range world.Entities {
+			if entity != e {
+				e.CheckCollision(entity)
+			}
+		}
+	}
+}
+
+func (e *Entity) Jump() {
+	e.Velocity = e.Velocity.Add(Vector{0, jumpSpeed})
+}
+
+func (e *Entity) Move(dir float64) {
+	e.Velocity.X -= runSpeed * dir
+}
+
+func (e *Entity) CheckCollision(entity *Entity) {
+	// vertical
+	if e.Position.Y+e.Size.Y > entity.Position.Y &&
+		e.Position.X > entity.Position.X &&
+		e.Position.X < entity.Position.X+entity.Size.X {
+
+		e.Velocity.Y = 0
+		e.Position.Y = entity.Position.Y - entity.Size.Y
+	}
+	// horizontal
+	//if e.Position.X+e.Size.X > entity.Position.X &&
+	//e.Position.Y > entity.Position.Y &&
+	//e.Position.Y < entity.Position.Y+entity.Size.Y {
+
+	//e.Velocity.X = 0
+	//e.Position.X = entity.Position.X - entity.Size.X
+	//}
+}
 
 func centerOfMass(e *Entity) Vector {
 	memo := Vector{0, 0}
@@ -32,15 +87,13 @@ func separation(e *Entity) Vector {
 	for _, entity := range world.Entities {
 		if entity != e {
 			difference := entity.Position.Sub(e.Position)
-			if difference.Mag() < separationDistance {
+			mag := difference.Mag()
+			if mag < separationDistance {
 				memo = memo.Sub(difference)
-			}
-
-			if math.Floor(difference.Mag()) == 0.0 {
-				memo = memo.Add(Vector{2, 2})
 			}
 		}
 	}
+
 	return memo
 }
 
@@ -57,13 +110,13 @@ func neighborVelocity(e *Entity) Vector {
 	return velocity
 }
 
-func maxVelocity(e *Entity) Vector {
-	velocity := e.Velocity
-	mag := velocity.Mag()
-	if mag > velocityLimit {
-		velocity = velocity.divideByNum(mag).multiplyByNum(velocityLimit)
+func (e *Entity) ClampMaxVelocity() {
+	if e.Velocity.X > velocityLimit {
+		e.Velocity.X = velocityLimit
 	}
-	return velocity
+	if e.Velocity.Y > velocityLimit {
+		e.Velocity.Y = velocityLimit
+	}
 }
 
 func tendToPlace(e *Entity) Vector {

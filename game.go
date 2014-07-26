@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"math/rand"
 	"time"
 )
 
@@ -19,27 +18,26 @@ var (
 
 func updateGame(now time.Time, w World) World {
 	for _, entity := range w.Entities {
-		v1 := centerOfMass(entity)
-		v2 := separation(entity)
-		v3 := neighborVelocity(entity)
-		v4 := tendToPlace(entity)
-
-		velocities := []Vector{v1, v2, v3, v4}
-		entity.Velocity = entity.Velocity.addMany(velocities)
-		entity.Velocity = maxVelocity(entity)
-		entity.Position = entity.Position.Add(entity.Velocity)
+		//velocities := []Vector{
+		//centerOfMass(entity),
+		//separation(entity),
+		//neighborVelocity(entity),
+		//tendToPlace(entity),
+		//}
+		//entity.Velocity = entity.Velocity.addMany(velocities)
+		//entity.Velocity = ClampMaxVelocity(entity)
+		//entity.Position = entity.Position.Add(entity.Velocity)
+		entity.Update()
 	}
 
 	return w
 }
 
 func update() {
-	start := time.Now().Second()
 	timer := time.Tick(15 * time.Millisecond)
 	for now := range timer {
 		world = updateGame(now, world)
-		processEvents()
-		world.Uptime = time.Now().Second() - start
+		ProcessEvents()
 
 		out, _ := json.Marshal(world)
 		hub.broadcast <- []byte(out)
@@ -52,11 +50,37 @@ func updateTarget(t Vector) {
 	}
 }
 
-func processEvents() {
+func AddPlayer(e Event) {
+	player := Entity{
+		TeamId:   1,
+		Kind:     DynamicEntity,
+		Size:     Vector{50, 50},
+		Position: Vector{200, 10},
+	}
+	world.Entities = append(world.Entities, &player)
+}
+
+func CommandEntity(e Event) {
+	for _, entity := range world.Entities {
+		switch e.Kind {
+		case "jump":
+			entity.Jump()
+			break
+		case "move":
+			entity.Move(e.Direction)
+			break
+		}
+	}
+}
+
+func ProcessEvents() {
 	for _, event := range events {
-		switch event.Kind {
-		case "click":
-			updateTarget(Vector{event.X, event.Y})
+		switch event.CommandType {
+		case "direct":
+			CommandEntity(event)
+			break
+		case "join":
+			AddPlayer(event)
 			break
 		}
 	}
@@ -66,13 +90,24 @@ func processEvents() {
 
 func (game *Game) run() {
 	println("run")
-	for i := 0; i < numberOfEntities; i++ {
-		id := rand.Intn(numTeams)
-		x := world.Width/2 + ((rand.Float64() - 0.5) * 8)
-		y := world.Height/2 + ((rand.Float64() - 0.5) * 8)
-		ent := Entity{id, Vector{x, y}, Vector{0, 0}, Vector{100.0, 100.0}}
-		world.Entities = append(world.Entities, &ent)
+	floor := Entity{
+		Kind:     StaticEntity,
+		Position: Vector{000, 500},
+		Size:     Vector{1000, 50},
 	}
-	go getInput()
+	lWall := Entity{
+		Kind:     StaticEntity,
+		Position: Vector{050, 400},
+		Size:     Vector{50, 80},
+	}
+	rWall := Entity{
+		Kind:     StaticEntity,
+		Position: Vector{600, 400},
+		Size:     Vector{50, 80},
+	}
+	world.Entities = append(world.Entities, &floor)
+	world.Entities = append(world.Entities, &rWall)
+	world.Entities = append(world.Entities, &lWall)
+	go GetInput()
 	go update()
 }
