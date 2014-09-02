@@ -56,6 +56,13 @@ func (g *Game) ProcessEvents() {
 		case "add_planet":
 			g.AddEntity(RandomPlanet())
 			break
+		case "add_planet_at_position":
+			g.AddEntity(&Entity{
+				Mass:     Rand(10000),
+				Position: &Vector{event.X, event.Y},
+				Velocity: &Vector{0, 0},
+			})
+			break
 		}
 	}
 
@@ -63,9 +70,8 @@ func (g *Game) ProcessEvents() {
 }
 
 type Event struct {
-	Kind        string
 	CommandType string
-	Direction   float64
+	X, Y        float64
 }
 
 func (g *Game) GetInput() {
@@ -90,6 +96,12 @@ func (g *Game) Run() {
 		Height:  500.0,
 		Gravity: Vector{0, 0},
 	}
+	// The Sun
+	g.AddEntity(&Entity{
+		Mass:     1.9891e5,
+		Position: &Vector{500, 500},
+		Velocity: &Vector{0, 0},
+	})
 
 	go g.GetInput()
 	go g.Update()
@@ -99,7 +111,7 @@ func (g *Game) Run() {
 		for _ = range timer {
 			log.Println("steps/sec:", g.StepCount/3)
 			g.StepCount = 0
-			log.Println("Entities: ", len(g.World.Entities))
+			log.Println("Entities: ", len(g.World.Entities), "\n")
 		}
 	}()
 }

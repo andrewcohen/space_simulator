@@ -75,10 +75,12 @@ function render(timestamp) {
   }
 
   if (entities && entities.length > 0) {
-    var biggest = entities[0];//biggestEntity(entities)
-    var camX = clamp(-biggest.position.x + WIDTH/2, 0 - WIDTH, 10000 - WIDTH);
-    var camY = clamp(-biggest.position.y + HEIGHT/2, 0 - HEIGHT, 10000 - HEIGHT);
-    ctx.translate(camX, camY);
+    if (followFirst) {
+      var biggest = entities[0];//biggestEntity(entities)
+      var camX = clamp(-biggest.position.x + WIDTH/2, 0 - WIDTH, 10000 - WIDTH);
+      var camY = clamp(-biggest.position.y + HEIGHT/2, 0 - HEIGHT, 10000 - HEIGHT);
+      ctx.translate(camX, camY);
+    }
 
     var i = entities.length;
     while (i--) {
@@ -86,7 +88,7 @@ function render(timestamp) {
       var pos = ent.position;
       ctx.fillStyle = colors[i % colors.length];
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 200 , 1, 200), 0, Math.PI * 2, true);
+      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 150 , 1, 150), 0, Math.PI * 2, true);
       ctx.fill();
     }
   }
@@ -99,19 +101,16 @@ window.onkeydown = function(e) {
       e.preventDefault();
       sendMessage([{CommandType: "add_planet"}]);
       break;
-
-    case 65: // A
-      sendMessage([{commandType: "direct", kind: "move", direction: -1}]);
-      break;
-    case 68: // D
-      sendMessage([{commandType: "direct", kind: "move", direction: 1}]);
-      break;
   }
 };
 
 canvas.onmouseup = function(e) {
-  var data = {kind: "move", x: e.offsetX, y: e.offsetY};
-  sendMessage([data]);
+  //if (entities[0]) {
+    //var x = entities[0].position.x + e.offsetX || 0;
+    //var y = entities[0].position.y + e.offsetY || 0;
+    //var data = {commandType: "add_planet_at_position", x: x, y: y};
+    //sendMessage([data]);
+  //}
 };
 
 var sendMessage = function(msg) {
@@ -128,4 +127,10 @@ var streak = false;
 var toggleStreaks = document.getElementById("toggle-streaks").onclick = function(e) {
   e.preventDefault();
   streak = !streak;
+}
+
+var followFirst = false;
+var toggleStreaks = document.getElementById("toggle-follow").onclick = function(e) {
+  e.preventDefault();
+  followFirst = !followFirst;
 }

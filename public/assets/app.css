@@ -1,4 +1,4 @@
-body {
+html, body {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -19,9 +19,11 @@ canvas {
   color: white;
 }
 
-#toggle-streaks { 
+#toggle-streaks,
+#toggle-follow {
   position: absolute;
   top: 30px;
   right: 0;
   margin: 10px;
 }
+#toggle-follow { top: 50px; }
