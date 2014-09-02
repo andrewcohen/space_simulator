@@ -20,12 +20,19 @@ function connect() {
   conn.onmessage = function(e) {
     var parsed = JSON.parse(e.data);
     lastMsg = parsed;
-    entities = parsed.entities;
+    entities = parsed.entities || [];
 
     conn.messageCount++;
-    if (conn.messageCount > 500) {
-      console.log(parsed);
+    if (conn.messageCount > 250) {
+      //console.log(parsed);
       conn.messageCount = 0;
+
+      var i = entities.length;
+      console.log(i + " entities");
+      //while (i--) {
+        //console.log(i + 1 + "| mass: "+ entities[i].mass+ ", x: "+ entities[i].position.x+ ", y: "+ entities[i].position.y);
+      //}
+      //console.log("\n \n \n");
     }
   }
 }
@@ -40,7 +47,7 @@ var colors = ["blue", "brown", "green", "yellow", "pink", "orange", "purple", "r
 
 var STATIC_ENTITY = 0;
 var DYNAMIC_ENTITY = 1;
-var SCALE = 1000000;
+var SCALE = 1;
 
 function clamp(val, min, max) {
   if (val < min) return min;
@@ -48,22 +55,34 @@ function clamp(val, min, max) {
   else return val;
 }
 
+function biggestEntity(entities) {
+  var i = entities.length;
+  var biggest = entities[0];
+  while (i--) {
+    if (biggest.mass < entities[i].mass) biggest = entities[i];
+  }
+  return biggest;
+}
+
 function render(timestamp) {
   ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   if (entities && entities.length > 0) {
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
-
-    var camX = clamp(-entities[0].position.x + WIDTH/2, 0, 10000 - WIDTH);
-    var camY = clamp(-entities[0].position.y + HEIGHT/2, 0, 10000 - HEIGHT);
+    var biggest = entities[0];//biggestEntity(entities)
+    var camX = clamp(-biggest.position.x + WIDTH/2, 0 - WIDTH, 10000 - WIDTH);
+    var camY = clamp(-biggest.position.y + HEIGHT/2, 0 - HEIGHT, 10000 - HEIGHT);
     ctx.translate(camX, camY);
 
     var i = entities.length;
     while (i--) {
       var ent = entities[i];
       var pos = ent.position;
-      ctx.fillStyle = colors[ent.team_id];
-      ctx.fillRect(pos.x, pos.y, clamp(ent.mass / SCALE, 10), clamp(ent.mass / SCALE, 10));
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 150 , 4, 150), 0, Math.PI * 2, true);
+      ctx.fill();
     }
   }
   requestAnimationFrame(render);
@@ -71,9 +90,9 @@ function render(timestamp) {
 
 window.onkeydown = function(e) {
   switch(e.which) {
-    case 32:
+    case 32: // SPACEBAR
       e.preventDefault();
-      sendMessage([{commandType: "direct", kind: "jump"}]);
+      sendMessage([{CommandType: "add_planet"}]);
       break;
 
     case 65: // A

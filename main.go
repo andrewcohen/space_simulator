@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"text/template"
 
 	"github.com/davecheney/profile"
@@ -45,7 +44,6 @@ func main() {
 		}
 		defer profile.Start(&cfg).Stop()
 	}
-	runtime.GOMAXPROCS(4)
 	flag.Parse()
 	homeTemplate = template.Must(template.ParseFiles(filepath.Join(*assets, "index.html")))
 	game := Game{}
