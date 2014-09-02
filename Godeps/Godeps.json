@@ -1,0 +1,14 @@
+{
+	"ImportPath": "sockettome",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/davecheney/profile",
+			"Rev": "1249fd3118c6ceaaee0ce774c865feac10403687"
+		},
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "10afcadf69098c003a97f23349c25ca16f0543e3"
+		}
+	]
+}
