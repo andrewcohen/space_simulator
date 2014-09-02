@@ -5,6 +5,7 @@ var msgEl = document.getElementById('count');
 
 function connect() {
   conn = new WebSocket('ws://localhost:3000/ws');
+  conn.messageCount = 0;
 
   conn.onopen = function(e) {
     console.log('connected');
@@ -20,6 +21,12 @@ function connect() {
     var parsed = JSON.parse(e.data);
     lastMsg = parsed;
     entities = parsed.entities;
+
+    conn.messageCount++;
+    if (conn.messageCount > 500) {
+      console.log(parsed);
+      conn.messageCount = 0;
+    }
   }
 }
 
@@ -33,18 +40,30 @@ var colors = ["blue", "brown", "green", "yellow", "pink", "orange", "purple", "r
 
 var STATIC_ENTITY = 0;
 var DYNAMIC_ENTITY = 1;
+var SCALE = 1000000;
+
+function clamp(val, min, max) {
+  if (val < min) return min;
+  else if (val > max) return max;
+  else return val;
+}
 
 function render(timestamp) {
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  ctx.setTransform(1,0,0,1,0,0);
 
   if (entities && entities.length > 0) {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+    var camX = clamp(-entities[0].position.x + WIDTH/2, 0, 10000 - WIDTH);
+    var camY = clamp(-entities[0].position.y + HEIGHT/2, 0, 10000 - HEIGHT);
+    ctx.translate(camX, camY);
 
     var i = entities.length;
     while (i--) {
       var ent = entities[i];
       var pos = ent.position;
       ctx.fillStyle = colors[ent.team_id];
-      ctx.fillRect(pos.x, pos.y, ent.size.x, ent.size.y);
+      ctx.fillRect(pos.x, pos.y, clamp(ent.mass / SCALE, 10), clamp(ent.mass / SCALE, 10));
     }
   }
   requestAnimationFrame(render);
@@ -54,14 +73,14 @@ window.onkeydown = function(e) {
   switch(e.which) {
     case 32:
       e.preventDefault();
-      sendMessage([{CommandType: "direct", kind: "jump"}]);
+      sendMessage([{commandType: "direct", kind: "jump"}]);
       break;
 
     case 65: // A
-      sendMessage([{CommandType: "direct", kind: "move", direction: -1}]);
+      sendMessage([{commandType: "direct", kind: "move", direction: -1}]);
       break;
     case 68: // D
-      sendMessage([{CommandType: "direct", kind: "move", direction: 1}]);
+      sendMessage([{commandType: "direct", kind: "move", direction: 1}]);
       break;
   }
 };

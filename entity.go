@@ -1,114 +1,84 @@
 package main
 
-const (
-	StaticEntity = iota
-	DynamicEntity
-)
+import "math"
 
 // Entity ...
 type Entity struct {
-	TeamId   int    `json:"team_id"`
-	Position Vector `json:"position"`
-	Size     Vector `json:"size"`
-	Velocity Vector `json:"velocity"`
-	Target   Vector `json:"target"`
-	Kind     int    `json:"kind"`
+	TeamId   int     `json:"team_id"`
+	Position Vector  `json:"position"`
+	Size     Vector  `json:"size"`
+	Velocity Vector  `json:"velocity"`
+	Target   Vector  `json:"target"`
+	Mass     float64 `json:"mass"`
 }
 
-var (
+const (
+	G                  = 6.67384e-11
 	separationDistance = 30.0
-	jumpSpeed          = 15.0
 	velocityLimit      = 5.0
-	runSpeed           = 5.0
 )
 
-func (e *Entity) Update() {
-	if e.Kind == DynamicEntity {
-		e.Velocity = e.Velocity.Add(world.Gravity)
-		if e.Velocity.X > 0 {
-			e.Velocity = e.Velocity.Add(world.Friction)
-		} else {
-			e.Velocity = e.Velocity.Sub(world.Friction)
-		}
-		e.ClampMaxVelocity()
-		e.Position = e.Position.Sub(e.Velocity)
-
-		// check collisions
-		for _, entity := range world.Entities {
-			if entity != e {
-				e.CheckCollision(entity)
-			}
-		}
-	}
-}
-
-func (e *Entity) Jump() {
-	e.Velocity = e.Velocity.Add(Vector{0, jumpSpeed})
-}
-
-func (e *Entity) Move(dir float64) {
-	e.Velocity.X -= runSpeed * dir
-}
-
-func (e *Entity) CheckCollision(entity *Entity) {
-	// vertical
-	if e.Position.Y+e.Size.Y > entity.Position.Y &&
-		e.Position.X > entity.Position.X &&
-		e.Position.X < entity.Position.X+entity.Size.X {
-
-		e.Velocity.Y = 0
-		e.Position.Y = entity.Position.Y - entity.Size.Y
-	}
-	// horizontal
-	//if e.Position.X+e.Size.X > entity.Position.X &&
-	//e.Position.Y > entity.Position.Y &&
-	//e.Position.Y < entity.Position.Y+entity.Size.Y {
-
-	//e.Velocity.X = 0
-	//e.Position.X = entity.Position.X - entity.Size.X
-	//}
-}
-
-func centerOfMass(e *Entity) Vector {
-	memo := Vector{0, 0}
+func (e *Entity) Update(world *World) {
+	// planetary gravity
+	force := Vector{}
 	for _, entity := range world.Entities {
 		if entity != e {
-			memo = memo.Add(e.Position)
+			// F = G*m1*m2*r^2
+			d := entity.Position.Sub(e.Position)
+			f := d.MultiplyByNum(-G * entity.Mass * e.Mass).DivideByNum(d.Mag())
+			force = force.Add(f)
 		}
 	}
-	memo = memo.divideByNum(float64(len(world.Entities) - 1))
-	center := memo.Sub(e.Position).divideByNum(100.0)
-
-	return center
+	e.Velocity = e.Velocity.Add(force)
+	e.Position = e.Position.Sub(e.Velocity)
 }
 
-func separation(e *Entity) Vector {
-	memo := Vector{0, 0}
-	for _, entity := range world.Entities {
-		if entity != e {
-			difference := entity.Position.Sub(e.Position)
-			mag := difference.Mag()
-			if mag < separationDistance {
-				memo = memo.Sub(difference)
-			}
-		}
-	}
-
-	return memo
+func (e *Entity) Distance(entity *Entity) Vector {
+	x := math.Sqrt(e.Position.X*e.Position.X + entity.Position.X*entity.Position.X)
+	y := math.Sqrt(e.Position.Y*e.Position.Y + entity.Position.Y*entity.Position.Y)
+	return Vector{x, y}
 }
 
-func neighborVelocity(e *Entity) Vector {
-	memo := Vector{0, 0}
-	for _, entity := range world.Entities {
-		if e != entity {
-			memo = memo.Add(e.Velocity)
-		}
-	}
-	memo = memo.divideByNum(float64(len(world.Entities) - 1))
-	velocity := memo.Sub(e.Velocity).divideByNum(8)
+//func centerOfMass(e *Entity) Vector {
+//memo := Vector{0, 0}
+//for _, entity := range world.Entities {
+//if entity != e {
+//memo = memo.Add(e.Position)
+//}
+//}
+//memo = memo.DivideByNum(float64(len(world.Entities) - 1))
+//center := memo.Sub(e.Position).DivideByNum(100.0)
 
-	return velocity
-}
+//return center
+//}
+
+//func separation(e *Entity) Vector {
+//memo := Vector{0, 0}
+//for _, entity := range world.Entities {
+//if entity != e {
+//difference := entity.Position.Sub(e.Position)
+//mag := difference.Mag()
+//if mag < separationDistance {
+//memo = memo.Sub(difference)
+//}
+//}
+//}
+
+//return memo
+//}
+
+//func neighborVelocity(e *Entity) Vector {
+//memo := Vector{0, 0}
+//for _, entity := range world.Entities {
+//if e != entity {
+//memo = memo.Add(e.Velocity)
+//}
+//}
+//memo = memo.DivideByNum(float64(len(world.Entities) - 1))
+//velocity := memo.Sub(e.Velocity).DivideByNum(8)
+
+//return velocity
+//}
 
 func (e *Entity) ClampMaxVelocity() {
 	if e.Velocity.X > velocityLimit {
@@ -121,5 +91,5 @@ func (e *Entity) ClampMaxVelocity() {
 
 func tendToPlace(e *Entity) Vector {
 	place := e.Target
-	return place.Sub(e.Position).divideByNum(100)
+	return place.Sub(e.Position).DivideByNum(100)
 }

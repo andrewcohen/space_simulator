@@ -22,13 +22,13 @@ func (v Vector) Sub(v2 Vector) Vector {
 	return Vector{v.X - v2.X, v.Y - v2.Y}
 }
 
-func (v Vector) multiplyByNum(n float64) Vector {
+func (v Vector) MultiplyByNum(n float64) Vector {
 	x := v.X * n
 	y := v.Y * n
 	return Vector{x, y}
 }
 
-func (v Vector) divideByNum(n float64) Vector {
+func (v Vector) DivideByNum(n float64) Vector {
 	return Vector{v.X / n, v.Y / n}
 }
 

@@ -5,9 +5,12 @@ import (
 	"go/build"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"text/template"
+
+	"github.com/davecheney/profile"
 )
 
 var (
@@ -33,23 +36,30 @@ func assetHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	//cfg := profile.Config{
-	//CPUProfile:     true,
-	//MemProfile:     true,
-	//ProfilePath:    "profiles", // store profiles in current directory
-	//NoShutdownHook: false,      // do not hook SIGINT
-	//}
-	//defer profile.Start(&cfg).Stop()
+	if len(os.Getenv("PROFILE")) > 0 {
+		cfg := profile.Config{
+			CPUProfile:     true,
+			MemProfile:     true,
+			ProfilePath:    "tmp", // store profiles in current directory
+			NoShutdownHook: false, // do not hook SIGINT
+		}
+		defer profile.Start(&cfg).Stop()
+	}
 	runtime.GOMAXPROCS(4)
 	flag.Parse()
 	homeTemplate = template.Must(template.ParseFiles(filepath.Join(*assets, "index.html")))
+	game := Game{}
+
 	go hub.run()
-	go game.run()
+	go game.Run()
+
 	http.HandleFunc("/", homeHandler)
-	http.HandleFunc("/ws", wsHandler)
+	http.HandleFunc("/ws", websocketHandler)
 	http.HandleFunc("/assets/", assetHandler)
 
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
+	} else {
+		log.Println("Listening on: ", *addr)
 	}
 }
