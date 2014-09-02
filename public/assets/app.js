@@ -21,6 +21,7 @@ function connect() {
     var parsed = JSON.parse(e.data);
     lastMsg = parsed;
     entities = parsed.entities || [];
+    updateGUI(entities);
 
     conn.messageCount++;
     if (conn.messageCount > 250) {
@@ -37,13 +38,15 @@ function connect() {
   }
 }
 
+
 var canvas = document.getElementById("canvas");
+var gui = document.getElementById("gui");
 var ctx = canvas.getContext('2d');
 var WIDTH = canvas.width = document.body.clientWidth, HEIGHT = canvas.height = document.body.clientHeight;
 var entities = [];
 render();
 
-var colors = ["blue", "brown", "green", "yellow", "pink", "orange", "purple", "red"];
+var colors = ["#AAFF00", "#FFAA00", "#FF00AA", "#AA00FF", "#00AAFF"];
 
 var STATIC_ENTITY = 0;
 var DYNAMIC_ENTITY = 1;
@@ -66,8 +69,10 @@ function biggestEntity(entities) {
 
 function render(timestamp) {
   ctx.setTransform(1,0,0,1,0,0);
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  if (!streak) {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  }
 
   if (entities && entities.length > 0) {
     var biggest = entities[0];//biggestEntity(entities)
@@ -81,7 +86,7 @@ function render(timestamp) {
       var pos = ent.position;
       ctx.fillStyle = colors[i % colors.length];
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 150 , 4, 150), 0, Math.PI * 2, true);
+      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 200 , 1, 200), 0, Math.PI * 2, true);
       ctx.fill();
     }
   }
@@ -113,4 +118,14 @@ var sendMessage = function(msg) {
   var json = JSON.stringify(msg);
   console.log("send msg:", json);
   conn.send(json);
+}
+
+var updateGUI = function(entities) {
+  gui.innerText = "# Planets: " + entities.length;
+};
+
+var streak = false;
+var toggleStreaks = document.getElementById("toggle-streaks").onclick = function(e) {
+  e.preventDefault();
+  streak = !streak;
 }
