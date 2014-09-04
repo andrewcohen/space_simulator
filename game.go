@@ -41,8 +41,8 @@ func Rand(max float64) float64 {
 func RandomPlanet() *Entity {
 	return &Entity{
 		Mass:     Rand(10000),
-		Position: &Vector{Rand(1000), Rand(1000)},
-		Velocity: &Vector{0, 0},
+		Position: &Vector{Rand(1000), Rand(1000), Rand(1000)},
+		Velocity: &Vector{0, 0, 0},
 	}
 }
 
@@ -59,8 +59,8 @@ func (g *Game) ProcessEvents() {
 		case "add_planet_at_position":
 			g.AddEntity(&Entity{
 				Mass:     Rand(10000),
-				Position: &Vector{event.X, event.Y},
-				Velocity: &Vector{0, 0},
+				Position: &Vector{event.X, event.Y, event.Z},
+				Velocity: &Vector{0, 0, 0},
 			})
 			break
 		}
@@ -71,7 +71,7 @@ func (g *Game) ProcessEvents() {
 
 type Event struct {
 	CommandType string
-	X, Y        float64
+	X, Y, Z     float64
 }
 
 func (g *Game) GetInput() {
@@ -94,14 +94,18 @@ func (g *Game) Run() {
 	g.World = World{
 		Width:   500.0,
 		Height:  500.0,
-		Gravity: Vector{0, 0},
+		Gravity: Vector{0, 0, 0},
 	}
 	// The Sun
 	g.AddEntity(&Entity{
 		Mass:     1.9891e5,
-		Position: &Vector{500, 500},
-		Velocity: &Vector{0, 0},
+		Position: &Vector{500, 500, 0},
+		Velocity: &Vector{0, 0, 0},
 	})
+
+	for i := 0; i < *planets; i++ {
+		g.AddEntity(RandomPlanet())
+	}
 
 	go g.GetInput()
 	go g.Update()

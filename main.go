@@ -15,6 +15,7 @@ import (
 var (
 	addr         = flag.String("addr", ":3000", "http service address")
 	assets       = flag.String("assets", defaultAssetPath(), "path to assets")
+	planets      = flag.Int("planets", 0, "# of starting planets")
 	homeTemplate *template.Template
 )
 
