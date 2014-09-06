@@ -44,6 +44,9 @@ stats.domElement.style.top = '0px';
 document.body.appendChild( stats.domElement );
 
 var simulation = { scale: 0.1 };
+simulation.fullscreen = function() {
+  document.documentElement.webkitRequestFullscreen();
+};
 
 var FOV = 75;
 var ASPECT = window.innerWidth / window.innerHeight;
@@ -67,12 +70,12 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 var gui = new dat.GUI();
+gui.add(simulation, 'fullscreen');
 gui.add(simulation, 'scale', 1, 100);
 var cameraFolder = gui.addFolder('Camera');
 cameraFolder.add(simulation.camera.position, 'x', -10, 50000).listen();
 cameraFolder.add(simulation.camera.position, 'y', -10, 50000).listen();
 cameraFolder.add(simulation.camera.position, 'z', -10, 50000).listen();
-cameraFolder.open();
 
 var entities = [];
 
@@ -141,6 +144,13 @@ window.onkeydown = function(e) {
       break;
   }
 };
+
+window.addEventListener('resize', onWindowResize, false);
+function onWindowResize() {
+  simulation.camera.aspect = window.innerWidth/window.innerHeight;
+  simulation.camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
 
 var sendMessage = function(msg) {
   var json = JSON.stringify(msg);
