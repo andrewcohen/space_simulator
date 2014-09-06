@@ -21,7 +21,6 @@ function connect() {
     var parsed = JSON.parse(e.data);
     lastMsg = parsed;
     entities = parsed.entities || [];
-    updateGUI(entities);
 
     conn.messageCount++;
     if (conn.messageCount > 250) {
@@ -38,12 +37,79 @@ function connect() {
   }
 }
 
+var stats = new Stats();
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.left = '0px';
+stats.domElement.style.top = '0px';
+document.body.appendChild( stats.domElement );
 
-var canvas = document.getElementById("canvas");
-var gui = document.getElementById("gui");
-var ctx = canvas.getContext('2d');
-var WIDTH = canvas.width = document.body.clientWidth, HEIGHT = canvas.height = document.body.clientHeight;
+var simulation = { scale: 0.1 };
+
+var FOV = 75;
+var ASPECT = window.innerWidth / window.innerHeight;
+var NEAR = 0.1;
+var FAR = 10000000;
+var scene = new THREE.Scene();
+simulation.camera = new THREE.PerspectiveCamera(FOV, ASPECT, NEAR, FAR);
+
+var controls = new THREE.TrackballControls(simulation.camera);
+controls.rotateSpeed = 1.0;
+controls.zoomSpeed = 1.2;
+controls.panSpeed = 0.8;
+controls.noZoom = false;
+controls.noPan = false;
+controls.staticMoving = true;
+controls.dynamicDampingFactor = 0.3;
+controls.keys = [ 65, 83, 68 ];
+
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+var gui = new dat.GUI();
+gui.add(simulation, 'scale', 1, 100);
+var cameraFolder = gui.addFolder('Camera');
+cameraFolder.add(simulation.camera.position, 'x', -10, 50000).listen();
+cameraFolder.add(simulation.camera.position, 'y', -10, 50000).listen();
+cameraFolder.add(simulation.camera.position, 'z', -10, 50000).listen();
+cameraFolder.open();
+
 var entities = [];
+
+var geometry = new THREE.SphereGeometry(5, 32, 32);
+var sphere = new THREE.Mesh(geometry, new THREE.MeshNormalMaterial());
+
+simulation.camera.position.z = 300;
+
+function render() {
+  requestAnimationFrame(render);
+  if (scene.children.length < entities.length) {
+    console.log('adding missing 3js entities');
+    var i, j = entities.length;
+
+    var cumX = cumY = cumZ = 0;
+    for (i = 0; i < j; i++) {
+      var s = new THREE.Mesh(
+        new THREE.SphereGeometry(entities[i].mass*simulation.scale, 32, 32),
+        new THREE.MeshNormalMaterial);
+      cumX += entities[i].position.x;
+      cumY += entities[i].position.y;
+      cumZ += entities[i].position.z;
+      scene.add(s);
+    }
+    simulation.camera.position.set(cumX/j, cumY/j, cumZ/j);
+  } else {
+    var i, j = scene.children.length;
+    for (i = 0; i < j; i++) {
+      scene.children[i].position.x = entities[i].position.x;
+      scene.children[i].position.y = entities[i].position.y;
+      scene.children[i].position.z = entities[i].position.z;
+    }
+  }
+  renderer.render(scene, simulation.camera);
+  stats.update();
+  controls.update();
+}
 render();
 
 var colors = ["#AAFF00", "#FFAA00", "#FF00AA", "#AA00FF", "#00AAFF"];
@@ -67,34 +133,6 @@ function biggestEntity(entities) {
   return biggest;
 }
 
-function render(timestamp) {
-  ctx.setTransform(1,0,0,1,0,0);
-  if (!streak) {
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  }
-
-  if (entities && entities.length > 0) {
-    if (followFirst) {
-      var biggest = entities[0];//biggestEntity(entities)
-      var camX = clamp(-biggest.position.x + WIDTH/2, 0 - WIDTH, 10000 - WIDTH);
-      var camY = clamp(-biggest.position.y + HEIGHT/2, 0 - HEIGHT, 10000 - HEIGHT);
-      ctx.translate(camX, camY);
-    }
-
-    var i = entities.length;
-    while (i--) {
-      var ent = entities[i];
-      var pos = ent.position;
-      ctx.fillStyle = colors[i % colors.length];
-      ctx.beginPath();
-      ctx.arc(pos.x, pos.y, clamp(ent.mass * SCALE / 150 , 1, 150), 0, Math.PI * 2, true);
-      ctx.fill();
-    }
-  }
-  requestAnimationFrame(render);
-}
-
 window.onkeydown = function(e) {
   switch(e.which) {
     case 32: // SPACEBAR
@@ -104,33 +142,8 @@ window.onkeydown = function(e) {
   }
 };
 
-canvas.onmouseup = function(e) {
-  //if (entities[0]) {
-    //var x = entities[0].position.x + e.offsetX || 0;
-    //var y = entities[0].position.y + e.offsetY || 0;
-    //var data = {commandType: "add_planet_at_position", x: x, y: y};
-    //sendMessage([data]);
-  //}
-};
-
 var sendMessage = function(msg) {
   var json = JSON.stringify(msg);
   console.log("send msg:", json);
   conn.send(json);
-}
-
-var updateGUI = function(entities) {
-  gui.innerText = "# Planets: " + entities.length;
-};
-
-var streak = false;
-var toggleStreaks = document.getElementById("toggle-streaks").onclick = function(e) {
-  e.preventDefault();
-  streak = !streak;
-}
-
-var followFirst = false;
-var toggleStreaks = document.getElementById("toggle-follow").onclick = function(e) {
-  e.preventDefault();
-  followFirst = !followFirst;
 }

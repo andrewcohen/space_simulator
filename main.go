@@ -20,7 +20,7 @@ var (
 )
 
 func defaultAssetPath() string {
-	p, err := build.Default.Import("sockettome/public", "", build.FindOnly)
+	p, err := build.Default.Import("public", "", build.FindOnly)
 	if err != nil {
 		return "."
 	}

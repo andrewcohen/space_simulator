@@ -39,9 +39,10 @@ func Rand(max float64) float64 {
 }
 
 func RandomPlanet() *Entity {
+	limit := 1e6
 	return &Entity{
 		Mass:     Rand(10000),
-		Position: &Vector{Rand(1000), Rand(1000), Rand(1000)},
+		Position: &Vector{Rand(limit), Rand(limit), Rand(limit)},
 		Velocity: &Vector{0, 0, 0},
 	}
 }
