@@ -20,7 +20,7 @@ var (
 )
 
 func defaultAssetPath() string {
-	p, err := build.Default.Import("public", "", build.FindOnly)
+	p, err := build.Default.Import("github.com/andrewcohen/space_simulator/public", "", build.FindOnly)
 	if err != nil {
 		return "."
 	}
